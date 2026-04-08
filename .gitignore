@@ -1,0 +1,24 @@
+# Virtual environment
+venv/
+
+# Secret file — NEVER push
+.env
+
+# Database
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+logs/
+*.log
+
+# macOS
+__MACOSX/
+.DS_Store
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo

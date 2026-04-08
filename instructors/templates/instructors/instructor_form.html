@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}{{ action }} Instructor — Skillfyme{% endblock %}
+
+{% block extra_head %}
+<style>
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label { font-size: 13px; font-weight: 600; color: #374151; }
+  input[type="text"], input[type="email"], input[type="number"], select {
+    padding: 10px 14px; border: 1.5px solid #d1d5db; border-radius: 8px;
+    font-size: 15px; outline: none; transition: border-color 0.2s;
+    background: #fff; width: 100%;
+  }
+  input:focus, select:focus { border-color: #0f3460; box-shadow: 0 0 0 3px rgba(15,52,96,0.1); }
+  .checkbox-row { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+  .checkbox-row input { width: 17px; height: 17px; cursor: pointer; }
+  .checkbox-row label { font-size: 14px; font-weight: 500; cursor: pointer; }
+  .gst-fields { display: none; }
+  .gst-fields.visible { display: contents; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:680px;margin:32px auto;padding:0 16px;">
+  <div style="background:#fff;border-radius:12px;padding:32px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+    <h1 style="font-size:20px;font-weight:700;color:#0f3460;margin-bottom:24px;">{{ action }} Instructor</h1>
+
+    {% if messages %}
+      {% for message in messages %}
+      <div class="alert {% if message.tags == 'error' %}alert-error{% else %}alert-success{% endif %}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="form-grid">
+
+        <div class="form-group">
+          <label for="name">Full Name *</label>
+          <input type="text" id="name" name="name" required value="{{ obj.name|default:'' }}" />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address *</label>
+          <input type="email" id="email" name="email" required value="{{ obj.email|default:'' }}"
+                 {% if obj %}readonly style="background:#f8fafc;"{% endif %} />
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone Number</label>
+          <input type="text" id="phone" name="phone" value="{{ obj.phone|default:'' }}" />
+        </div>
+
+        <div class="form-group">
+          <label for="cost_per_hour">Cost per Hour (₹) *</label>
+          <input type="number" id="cost_per_hour" name="cost_per_hour" step="0.01" min="0" required
+                 value="{{ obj.cost_per_hour|default:'' }}" />
+        </div>
+
+        <div class="form-group full">
+          <div class="checkbox-row">
+            <input type="checkbox" id="gst_applicable" name="gst_applicable"
+                   {% if obj and obj.gst_applicable %}checked{% endif %}
+                   onchange="toggleGst(this)" />
+            <label for="gst_applicable">GST Applicable</label>
+          </div>
+        </div>
+
+        <div class="form-group gst-fields {% if obj and obj.gst_applicable %}visible{% endif %}" id="gst-pct-group">
+          <label for="gst_percentage">GST Percentage (%)</label>
+          <input type="number" id="gst_percentage" name="gst_percentage" step="0.01" min="0" max="100"
+                 value="{{ obj.gst_percentage|default:'18.00' }}" />
+        </div>
+
+        <div class="form-group gst-fields {% if obj and obj.gst_applicable %}visible{% endif %}" id="gstin-group">
+          <label for="gstin">GSTIN (optional)</label>
+          <input type="text" id="gstin" name="gstin" maxlength="15" value="{{ obj.gstin|default:'' }}" />
+        </div>
+
+        <div class="form-group">
+          <label for="status">Status</label>
+          <select id="status" name="status">
+            {% for val, label in status_choices %}
+            <option value="{{ val }}" {% if obj and obj.status == val %}selected{% elif not obj and val == 'active' %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+      </div><!-- .form-grid -->
+
+      <div style="display:flex;gap:12px;margin-top:28px;">
+        <button type="submit"
+                style="flex:1;padding:11px;background:#0f3460;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">
+          {{ action }} Instructor
+        </button>
+        <a href="{% url 'instructor-list' %}"
+           style="flex:1;padding:11px;background:#f1f5f9;color:#374151;border-radius:8px;font-size:15px;font-weight:600;text-align:center;text-decoration:none;">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function toggleGst(cb) {
+  const fields = document.querySelectorAll('.gst-fields');
+  fields.forEach(f => cb.checked ? f.classList.add('visible') : f.classList.remove('visible'));
+}
+</script>
+{% endblock %}

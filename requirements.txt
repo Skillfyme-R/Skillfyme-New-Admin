@@ -1,0 +1,14 @@
+django>=4.2,<5.0
+djangorestframework>=3.14
+django-environ>=0.11
+apscheduler>=3.10
+passlib[bcrypt]>=1.7
+jinja2>=3.1
+python-multipart>=0.0.9
+gunicorn>=21.0
+
+# --- NEW: Google OAuth ---
+django-allauth>=0.63.0
+cryptography>=41.0
+requests>=2.31
+django-apscheduler>=0.6
