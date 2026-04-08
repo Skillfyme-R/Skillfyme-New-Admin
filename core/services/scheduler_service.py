@@ -54,6 +54,7 @@ def _send_batch_emails(batch_code: str, class_date_iso: str) -> None:
     from core.services.email_service import mark_cancelled, send_email_with_retry, send_instructor_reminder_email
 
     class_date = date.fromisoformat(class_date_iso)
+    logger.info('JOB FIRED: batch=%s class_date=%s', batch_code, class_date_iso)
 
     # Open a fresh connection for this thread
     django.db.close_old_connections()
@@ -127,8 +128,8 @@ def _send_batch_emails(batch_code: str, class_date_iso: str) -> None:
         else:
             logger.info('No instructor_email set for batch %s — skipping instructor reminder.', batch_code)
 
-    except Exception:
-        logger.exception('Unexpected error in _send_batch_emails for batch %s.', batch_code)
+    except Exception as e:
+        logger.exception('Unexpected error in _send_batch_emails for batch %s: %s', batch_code, str(e))
     finally:
         django.db.connection.close()
 
