@@ -82,7 +82,6 @@ def _create_or_get_log(
 # ---------------------------------------------------------------------------
 
 ZEPTO_API_URL = "https://api.zeptomail.in/v1.1/email"
-ZEPTO_TOKEN = os.getenv("ZEPTO_TOKEN")
 
 
 def _send_via_zepto(
@@ -93,10 +92,14 @@ def _send_via_zepto(
 ) -> None:
     """Low-level ZeptoMail API send. Raises on failure."""
 
+    zepto_token = os.getenv("ZEPTO_TOKEN")
+    if not zepto_token:
+        raise Exception("ZEPTO_TOKEN environment variable is not set or empty")
+
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
-        "authorization": f"Zoho-enczapikey {ZEPTO_TOKEN}",
+        "authorization": f"Zoho-enczapikey {zepto_token}",
     }
 
     payload = {
