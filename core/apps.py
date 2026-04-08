@@ -50,7 +50,10 @@ class CoreConfig(AppConfig):
             if not scheduler.running:
                 scheduler.start()
                 logger.info('APScheduler started from AppConfig.ready()')
-            reschedule_all_batches()
+            # Delay DB query so it doesn't block gunicorn startup
+            import threading
+            t = threading.Thread(target=reschedule_all_batches, daemon=True)
+            t.start()
         except Exception:
             logger.exception('Failed to start scheduler in AppConfig.ready()')
 
