@@ -29,7 +29,9 @@ logger = logging.getLogger(__name__)
 _IST = ZoneInfo(settings.APP_TIMEZONE)
 
 # Module-level singleton — created once, shared everywhere
+from django_apscheduler.jobstores import DjangoJobStore
 scheduler = BackgroundScheduler(timezone=settings.APP_TIMEZONE)
+scheduler.add_jobstore(DjangoJobStore(), 'default')
 
 # ---------------------------------------------------------------------------
 # Internal helpers
