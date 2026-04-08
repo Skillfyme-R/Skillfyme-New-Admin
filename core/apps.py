@@ -57,13 +57,4 @@ class CoreConfig(AppConfig):
         except Exception:
             logger.exception('Failed to start scheduler in AppConfig.ready()')
 
-# At the bottom of settings.py or in your AppConfig.ready()
-from django.db.backends.signals import connection_created
 
-def set_sqlite_pragmas(sender, connection, **kwargs):
-    if connection.vendor == 'sqlite':
-        cursor = connection.cursor()
-        cursor.execute('PRAGMA journal_mode=WAL;')
-        cursor.execute('PRAGMA foreign_keys=ON;')
-
-connection_created.connect(set_sqlite_pragmas)
