@@ -211,9 +211,10 @@ def reschedule_all_batches() -> None:
     'Active' means batch_end_date >= today.
     """
     import django.db
+    from core.models import Batch
     django.db.close_old_connections()
     try:
-                today = date.today()
+        today = date.today()
         active_batches = list(Batch.objects.filter(batch_end_date__gte=today))
         logger.info('Rescheduling jobs for %d active batches on startup.', len(active_batches))
         for batch in active_batches:
