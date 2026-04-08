@@ -21,7 +21,6 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
-from core.models import Batch
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.date import DateTrigger
 from django.conf import settings
@@ -214,8 +213,7 @@ def reschedule_all_batches() -> None:
     import django.db
     django.db.close_old_connections()
     try:
-        from core.models import Batch
-        today = date.today()
+                today = date.today()
         active_batches = list(Batch.objects.filter(batch_end_date__gte=today))
         logger.info('Rescheduling jobs for %d active batches on startup.', len(active_batches))
         for batch in active_batches:
@@ -233,18 +231,3 @@ def get_scheduler_status() -> str:
         return f'running ({job_count} jobs)'
     return 'stopped'
 
-# core/services/scheduler_service.py
-
-from django.db import OperationalError, ProgrammingError
-
-def reschedule_all_batches():
-    try:
-        today = date.today()
-        active_batches = list(Batch.objects.filter(batch_end_date__gte=today))
-        # ... rest of your logic
-    except (OperationalError, ProgrammingError) as e:
-        # Table doesn't exist yet (e.g. during first migrate), skip silently
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.warning("reschedule_all_batches skipped — DB tables not ready: %s", e)
-        return
