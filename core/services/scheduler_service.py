@@ -12,15 +12,20 @@ Key invariants preserved:
   - Jobs firing in background threads open their own DB connection and
     close it in a finally block (Django ORM thread-safety)
   - reschedule_all_batches() queries batch_end_date >= today
+
+CHANGE: Switched from DjangoJobStore to MemoryJobStore — DjangoJobStore
+queries the DB at module import time (before migrations run), causing
+"no such table: django_apscheduler_djangojob" errors on startup.
+Jobs are rebuilt from DB on every startup via reschedule_all_batches().
 """
 
 from __future__ import annotations
 
 import logging
-import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
+
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.date import DateTrigger
 from django.conf import settings
@@ -28,10 +33,9 @@ from django.conf import settings
 logger = logging.getLogger(__name__)
 _IST = ZoneInfo(settings.APP_TIMEZONE)
 
-# Module-level singleton — created once, shared everywhere
-from django_apscheduler.jobstores import DjangoJobStore
+# Module-level singleton — MemoryJobStore avoids DB access at import time
 scheduler = BackgroundScheduler(timezone=settings.APP_TIMEZONE)
-scheduler.add_jobstore(DjangoJobStore(), 'default')
+
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -56,7 +60,6 @@ def _send_batch_emails(batch_code: str, class_date_iso: str) -> None:
     class_date = date.fromisoformat(class_date_iso)
     logger.info('JOB FIRED: batch=%s class_date=%s', batch_code, class_date_iso)
 
-    # Open a fresh connection for this thread
     django.db.close_old_connections()
 
     try:
@@ -165,13 +168,8 @@ def schedule_batch_jobs(batch) -> int:
 
         now_ist = datetime.now(tz=_IST)
         if trigger_dt <= now_ist:
-            # If class itself hasn't happened yet, fire immediately
-            class_dt_ist = datetime(
-                class_date.year, class_date.month, class_date.day,
-                h, m, 0, tzinfo=_IST,
-            )
+            # Class hasn't happened yet — fire immediately
             if class_dt_ist > now_ist:
-                # Class is still in the future — send email right now
                 trigger_dt = now_ist + timedelta(seconds=5)
             else:
                 continue  # Class already over, skip
@@ -184,7 +182,7 @@ def schedule_batch_jobs(batch) -> int:
             id=job_id,
             name=f'Reminder: {batch.batch_code} on {class_date}',
             args=[batch.batch_code, class_date.isoformat()],
-            misfire_grace_time=600,   # 10-minute grace window — MUST NOT change
+            misfire_grace_time=600,
             replace_existing=True,
         )
         added += 1
@@ -215,6 +213,7 @@ def reschedule_all_batches() -> None:
     """
     import django.db
     from core.models import Batch
+
     django.db.close_old_connections()
     try:
         today = date.today()
@@ -234,4 +233,3 @@ def get_scheduler_status() -> str:
         job_count = len(scheduler.get_jobs())
         return f'running ({job_count} jobs)'
     return 'stopped'
-
