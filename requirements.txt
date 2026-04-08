@@ -11,4 +11,4 @@ gunicorn>=21.0
 django-allauth>=0.63.0
 cryptography>=41.0
 requests>=2.31
-django-apscheduler>=0.6
+django-apscheduler>=0.6PyJWT>=2.8
