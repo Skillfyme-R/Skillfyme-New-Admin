@@ -34,8 +34,7 @@ logger = logging.getLogger(__name__)
 _IST = ZoneInfo(settings.APP_TIMEZONE)
 
 # Module-level singleton — MemoryJobStore avoids DB access at import time
-scheduler = BackgroundScheduler(timezone=settings.APP_TIMEZONE)
-
+scheduler = BackgroundScheduler(timezone=_IST)
 
 # ---------------------------------------------------------------------------
 # Internal helpers
@@ -155,6 +154,9 @@ def schedule_batch_jobs(batch) -> int:
         batch_end_date=batch.batch_end_date,
     )
     minutes_before = settings.MINUTES_BEFORE_CLASS
+    # 🔥 ADD THIS
+    remove_batch_jobs(batch.batch_code)
+
     h, m = map(int, batch.class_time.split(':'))
     added = 0
 
@@ -168,13 +170,18 @@ def schedule_batch_jobs(batch) -> int:
 
         now_ist = datetime.now(tz=_IST)
         if trigger_dt <= now_ist:
-            # Class hasn't happened yet — fire immediately
-            if class_dt_ist > now_ist:
-                trigger_dt = now_ist + timedelta(seconds=5)
-            else:
-                continue  # Class already over, skip
+            logger.info(
+                f"Skipping past reminder for {batch.batch_code} on {class_date} "
+                f"(trigger={trigger_dt}, now={now_ist})"
+            )
+            continue  # Class already over, skip
 
         job_id = _job_id(batch.batch_code, class_date)
+
+        logger.info(
+        f"Scheduling job: batch={batch.batch_code}, "
+        f"class_date={class_date}, trigger={trigger_dt}, now={now_ist}"
+)
 
         scheduler.add_job(
             _send_batch_emails,
