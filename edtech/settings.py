@@ -30,8 +30,7 @@ environ.Env.read_env(BASE_DIR / '.env')
 # ---------------------------------------------------------------------------
 SECRET_KEY = env('SECRET_KEY', default='change-me-in-production')
 DEBUG = env.bool('DEBUG', default=False)
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
-
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 # ---------------------------------------------------------------------------
 # Installed apps
 # ---------------------------------------------------------------------------
@@ -110,6 +109,7 @@ DATABASES = {
     'default': dj_database_url.config(
         default=env('DATABASE_URL', default='sqlite:///data/edtech.db'),
         conn_max_age=600,
+        ssl_require=True
     )
 }
 
@@ -194,9 +194,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # ---------------------------------------------------------------------------
 # Logging
-# ---------------------------------------------------------------------------
-_logs_dir = BASE_DIR / 'logs'
-_logs_dir.mkdir(exist_ok=True)
+# --------------------------------------------------------------------------
 
 LOGGING = {
     'version': 1,
@@ -207,19 +205,13 @@ LOGGING = {
         },
     },
     'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'standard',
-        },
-        'file': {
-            'class': 'logging.FileHandler',
-            'filename': str(BASE_DIR / 'logs' / 'app.log'),
-            'encoding': 'utf-8',
-            'formatter': 'standard',
+    'console': {
+        'class': 'logging.StreamHandler',
+        'formatter': 'standard',
         },
     },
     'root': {
-        'handlers': ['console', 'file'],
+        'handlers': ['console'],
         'level': LOG_LEVEL,
-    },
+    }
 }
