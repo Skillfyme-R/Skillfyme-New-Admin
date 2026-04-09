@@ -23,8 +23,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load .env
 env = environ.Env()
-environ.Env.read_env(BASE_DIR / '.env')
-
+if os.path.exists(BASE_DIR / '.env'):
+    environ.Env.read_env(BASE_DIR / '.env')
 # ---------------------------------------------------------------------------
 # Core Django settings
 # ---------------------------------------------------------------------------
@@ -107,7 +107,7 @@ WSGI_APPLICATION = 'edtech.wsgi.application'
 # ---------------------------------------------------------------------------
 DATABASES = {
     'default': dj_database_url.config(
-        default=env('DATABASE_URL', default='sqlite:///data/edtech.db'),
+        default=None,
         conn_max_age=600,
         ssl_require=True
     )
